@@ -1,6 +1,6 @@
 # osticket-docker
 
-Create an isolated network for osticket:
+Create an isolated network for osticket. Example using the bridge network driver (overlay should also work):
 
 ```
   docker network create --driver bridge osticket_nw
@@ -54,5 +54,5 @@ You can now run your osticket container, bind mount your SSL certs and link it t
               -p 80:80 -p 443:443 \
               -d  cassj/osticket 
 ```
-
+And you can configure your osticket instance at http://hostip/setup, using 'osticket-mysql' (or whatever you called your database container) as your database host. 
 
