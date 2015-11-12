@@ -22,7 +22,12 @@ COPY install_osticket.sh /tmp/install_osticket.sh
 RUN chmod +x /tmp/install_osticket.sh
 RUN /tmp/install_osticket.sh
 
-# Define default env vars for httpd - you can override these
+COPY setup_osticket.sh /tmp/setup_osticket.sh
+RUN chmod +x /tmp/setup_osticket.sh 
+
+CMD  httpd-foreground & /tmp/setup_osticket.sh && fg  
+
+# Define default env vars for httpd - you can override these when you create the container
 ENV SERVERNAME localhost
 ENV ADMINEMAIL root@localhost
 

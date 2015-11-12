@@ -13,6 +13,7 @@ We'll used the official docker one (https://github.com/docker-library/docs/tree/
 ```
   docker pull mysql
   docker run --name osticket-mysql \
+             --hostname osticket-mysql \
               -e MYSQL_ROOT_PASSWORD=password \
               -e MYSQL_DATABASE=osticket \
               -e MYSQL_USER=osticket \
@@ -35,7 +36,7 @@ If you need to get into the database and dig around for some reason, find out th
 And then start another container running the mysql client and use that to connect (replacing <IP> with the actual IP):
 
 ```
-  docker run -it --net=osticket_nw  --rm mysql sh -c 'exec mysql -h<IP> -P3306 -uroot -p"password"'
+  docker run -it --net=osticket_nw  --rm cassj/osticket sh -c 'exec mysql -hosticket-mysql  -uosticket -p"password"'
 ```
 
 If you don't have proper SSL certs for your server, generate them with something like: 
@@ -44,15 +45,52 @@ If you don't have proper SSL certs for your server, generate them with something
 openssl req -new -x509 -nodes -out server.pem -keyout server.key -days 3650 -subj '/CN=localhost'
 ```
 
-You can now run your osticket container, bind mount your SSL certs and link it to your database:
+You can now run your osticket container, bind mount your SSL certs and link it to your database.
+ You'll need to define some environment variables to configure your OSTicket: 
+
+OSTICKET_URL   - will try to autodetect if undefined. 
+OSTICKET_NAME  - the name of your OSTicket site, e.g. "Bob's Helpdesk"
+OSTICKET_EMAIL - the system email (e.g. support@example.com)
+
+OSTICKET_ADMIN_FNAME - Administrator forename
+OSTICKET_ADMIN_LNAME - Administrator surname
+OSTICKET_ADMIN_EMAIL 
+OSTICKET_ADMIN_USERNAME 
+OSTICKET_ADMIN_PASSWORD
+
+OSTICKET_DB_PREFIX - Database table prefix. If not defined then defaults to ost_
+OSTICKET_DB_HOST - Database host (e.g. osticket-mysql) 
+OSTICKET_DB_NAME 
+OSTICKET_DB_USER  
+OSTICKET_DB_PASS
+
+
 
 ```
   docker run --name osticket \
+             --hostname osticket \
              --net osticket_nw \
+              -e OSTICKET_URL=192.168.99.100 \
+              -e OSTICKET_NAME=MyOSTicketService \
+              -e OSTICKET_EMAIL=support@example.com \
+              -e OSTICKET_ADMIN_EMAIL=admin@example.com\
+              -e OSTICKET_ADMIN_FNAME=Kate\
+              -e OSTICKET_ADMIN_LNAME=Administrator \
+              -e OSTICKET_ADMIN_USERNAME=administrator \
+              -e OSTICKET_ADMIN_PASSWORD=password \
+              -e OSTICKET_DB_PREFIX=ost_ \
+              -e OSTICKET_DB_HOST=osticket-mysql \
+              -e OSTICKET_DB_NAME=osticket \
+              -e OSTICKET_DB_USER=osticket \
+              -e OSTICKET_DB_PASS=password \
               -v /tmp/server.key:/usr/local/apache2/conf/server.key \
               -v /tmp/server.pem:/usr/local/apache2/conf/server.pem \
               -p 80:80 -p 443:443 \
-              -d  cassj/osticket 
+              -d cassj/osticket-docker:latest 
 ```
-And you can configure your osticket instance at http://hostip/setup, using 'osticket-mysql' (or whatever you called your database container) as your database host. 
+
+Users can submit tickets at https://$OSTICKET_URL/
+
+You can log into the administration interface with https://$OSTICKET_URL/scp/login.php
+
 
