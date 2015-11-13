@@ -50,12 +50,14 @@ The OSticket container stores it's osticket data in a volume, so if you create a
 then you can just --volumes-from. Otherwise your config data won't persist through an osticket 
 container restart. You might as well pass your SSL certs in here too  
 
+```
 docker run --name osticket-data \
            --net osticket_nw \
             -v /tmp/server.key:/usr/local/apache2/conf/server.key \
             -v /tmp/server.pem:/usr/local/apache2/conf/server.pem \
            cassj/osticket-docker:latest \
            /bin/echo 'Data Container Ready'
+```
 
 You can now run your osticket container, bind mount your SSL certs and link it to your database.
 
