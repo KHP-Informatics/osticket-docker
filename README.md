@@ -45,8 +45,21 @@ If you don't have proper SSL certs for your server, generate them with something
 openssl req -new -x509 -nodes -out server.pem -keyout server.key -days 3650 -subj '/CN=localhost'
 ```
 
+
+The OSticket container stores it's osticket data in a volume, so if you create a data container, 
+then you can just --volumes-from. Otherwise your config data won't persist through an osticket 
+container restart. You might as well pass your SSL certs in here too  
+
+docker run --name osticket-data \
+           --net osticket_nw \
+            -v /tmp/server.key:/usr/local/apache2/conf/server.key \
+            -v /tmp/server.pem:/usr/local/apache2/conf/server.pem \
+           cassj/osticket-docker:latest \
+           /bin/echo 'Data Container Ready'
+
 You can now run your osticket container, bind mount your SSL certs and link it to your database.
- You'll need to define some environment variables to configure your OSTicket: 
+
+You'll need to define some environment variables to configure your OSTicket: 
 
 OSTICKET_URL   - will try to autodetect if undefined. 
 OSTICKET_NAME  - the name of your OSTicket site, e.g. "Bob's Helpdesk"
@@ -70,6 +83,7 @@ OSTICKET_DB_PASS
   docker run --name osticket \
              --hostname osticket \
              --net osticket_nw \
+             --volumes-from osticket-data \
               -e OSTICKET_URL=192.168.99.100 \
               -e OSTICKET_NAME=MyOSTicketService \
               -e OSTICKET_EMAIL=support@example.com \
@@ -83,8 +97,6 @@ OSTICKET_DB_PASS
               -e OSTICKET_DB_NAME=osticket \
               -e OSTICKET_DB_USER=osticket \
               -e OSTICKET_DB_PASS=password \
-              -v /tmp/server.key:/usr/local/apache2/conf/server.key \
-              -v /tmp/server.pem:/usr/local/apache2/conf/server.pem \
               -p 80:80 -p 443:443 \
               -d cassj/osticket-docker:latest 
 ```
