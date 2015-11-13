@@ -14,5 +14,9 @@ curl -vvv -k -X POST -F s=install -F fname=$OSTICKET_ADMIN_FNAME -F lname=$OSTIC
 # stop the webserver
 kill $PID
 
+# delete the setup dir
+rm -rf /usr/local/apache2/htdocs/osticket/setup
+
+
 # start the webserver in the foreground
 httpd-foreground
