@@ -10,7 +10,7 @@ cd php-5.6.15
 ln -s /usr/lib/x86_64-linux-gnu/libssl.so /usr/lib/libssl.so
 ln -s /usr/lib/x86_64-linux-gnu/libcrypto.so /usr/lib/libcrypto.so
 # Configure, Compile and Install
-./configure --with-apxs2=/usr/local/apache2/bin/apxs --with-gettext --with-mysqli --with-imap  --with-gd  --with-kerberos --with-imap-ssl --with-openssl --enable-mbstring --without-pear 
+./configure --with-apxs2=/usr/local/apache2/bin/apxs --with-gettext --with-mysqli --with-imap --with-zlib --with-gd  --with-curl --with-kerberos --with-imap-ssl --with-openssl --enable-mbstring 
 make 
 make install
 # Clean up

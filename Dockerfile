@@ -1,7 +1,7 @@
 FROM httpd
 MAINTAINER Cass Johnston <cassjohnston@gmail.com>
 
-RUN apt-get update && apt-get install -yqq  wget bzip2 curl vim build-essential libapr1-dev libaprutil1-dev libxml2-dev zip mysql-client libpng12-dev libc-client2007e-dev libkrb5-dev gettext libgettextpo-dev && apt-get clean
+RUN apt-get update && apt-get install -yqq  wget bzip2 curl zlib1g-dev libcurl4-openssl-dev vim build-essential libapr1-dev libaprutil1-dev libxml2-dev zip mysql-client libpng12-dev libc-client2007e-dev libkrb5-dev gettext git libgettextpo-dev && apt-get clean
 
 # Create a user & group (apache runs as this user)
 RUN groupadd --system osticket 
@@ -22,6 +22,7 @@ COPY httpd-vhosts.conf /usr/local/apache2/conf/extra/httpd-vhosts.conf
 COPY install_osticket.sh /tmp/install_osticket.sh
 RUN chmod +x /tmp/install_osticket.sh
 RUN /tmp/install_osticket.sh
+
 VOLUME /usr/local/apache2/htdocs/osticket
 RUN chown -R osticket:osticket /usr/local/apache2/htdocs/osticket
 

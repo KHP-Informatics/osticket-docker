@@ -103,6 +103,11 @@ OSTICKET_DB_PASS
               -d cassj/osticket-docker:latest 
 ```
 
+
+The setup script will set up the core plugins (https://github.com/osTicket/core-plugins). 
+You might need to give it a minute after startup to get the plugins initialised. THey can't
+be installed until after the system is setup though.
+
 Users can submit tickets at https://$OSTICKET_URL/
 
 You can log into the administration interface with https://$OSTICKET_URL/scp/login.php
