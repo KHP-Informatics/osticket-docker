@@ -1,19 +1,24 @@
 # osticket-docker
 
-Create an isolated network for osticket. Example using the bridge network driver (overlay should also work):
+
+## To Build
+
+
+Default httpd.conf assumes ssl (change httpd.conf if you like)
+
+Then just docker build -t me/whatever .
+
+
+## To Run
+
+### Database
+
+Setup a mysql database for OSticket to use (and, if you like, an isolated network for your containers to communicate over). For example:
 
 ```
   docker network create --driver bridge osticket_nw
-```
-
-You will need a mysql DB server running on that network:
-
-We'll used the official docker one (https://github.com/docker-library/docs/tree/master/mysql)
-
-```
   docker pull mysql
   docker run --name osticket-mysql \
-             --hostname osticket-mysql \
               -e MYSQL_ROOT_PASSWORD=password \
               -e MYSQL_DATABASE=osticket \
               -e MYSQL_USER=osticket \
@@ -24,26 +29,41 @@ We'll used the official docker one (https://github.com/docker-library/docs/tree/
 
 Changing the root and user passwords, obvs.
 
-This stores its mysql data in a volume. You can back it up by running another container and copying the contents of the mysql data directory and you can restore it by just starting a new instance with -v /path/to/backup:/var/lib/mysql.
+Docs for the mysql container are here - https://hub.docker.com/_/mysql/
 
-
-If you need to get into the database and dig around for some reason, find out the IP address of your database with
-
+If you need to access the database, you can use something like:
 ```
-  docker network inspect osticket_nw
+  docker run -it --rm --net=osticket_nw mysql /usr/bin/mysql -hosticket-mysql -u<username> -p<password>
 ```
 
-And then start another container running the mysql client and use that to connect (replacing <IP> with the actual IP):
+
+
+### OSticket Web Server
+
+Put your SSL cert in a named volume. For dev, you can just:
 
 ```
-  docker run -it --net=osticket_nw  --rm cassj/osticket sh -c 'exec mysql -hosticket-mysql  -uosticket -p"password"'
+  docker run --name=deleteme -it -v osticket-keys:/tmp cassj/osticket /bin/bash
+  cd /tmp
+  openssl req -new -x509 -nodes -out server.pem -keyout server.key -days 3650 -subj '/CN=localhost'
+  exit
+  docker rm deleteme
 ```
 
-If you don't have proper SSL certs for your server, generate them with something like: 
+Docker 1.9 recommends using named volumes, but until 1.10 (https://github.com/docker/docker/issues/18670) these don't copy over the data from the container image as anonymous volumes did. To work around this for now, create a named data volume by manually copying over the contents:
 
 ```
-openssl req -new -x509 -nodes -out server.pem -keyout server.key -days 3650 -subj '/CN=localhost'
+docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-docker /usr/bin/rsync -avz /var/www/dokuwiki/ /data/
+docker rm deleteme
 ```
+
+Docker 1.9 recommends using named volumes, but until 1.10 (https://github.com/docker/docker/issues/18670) these don't copy over the data from the container image as anonymous volumes did. To work around this for now, create a named data volume by manually copying over the contents:
+
+```
+docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-data /usr/bin/rsync -avz /var/www/dokuwiki/ /data/
+docker rm deleteme
+```
+
 
 
 The OSticket container stores it's osticket data in a volume, so if you create a data container, 
@@ -113,3 +133,21 @@ Users can submit tickets at https://$OSTICKET_URL/
 You can log into the administration interface with https://$OSTICKET_URL/scp/login.php
 
 
+### Upgrading
+
+Backup your database before you start:
+
+```
+docker run --rm -it -v /wherever/backups:/data --net=osticket_nw mysql /bin/bash -c "/usr/bin/mysqldump -hosticket-mysql -uroot -ppassword osticket > /data/osticket-dbdump-DATE.sql"
+```
+
+Stop the running container but don't delete it until the update has been tested - just rename it
+
+  docker stop osticket
+  docker rename osticket osticket-DATE
+
+Get the version you want from Dockerhub
+
+  docker pull cassj/osticket:<tag>
+
+OSticket update docs are available at http://osticket.com/wiki/Upgrade_and_migration, and basically involve overwriting your existing OSticket files with new ones. 

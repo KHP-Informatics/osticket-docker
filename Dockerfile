@@ -18,12 +18,12 @@ COPY httpd.conf /usr/local/apache2/conf/httpd.conf
 COPY httpd-ssl.conf /usr/local/apache2/conf/extra/httpd-ssl.conf
 COPY httpd-vhosts.conf /usr/local/apache2/conf/extra/httpd-vhosts.conf
 
-# Install osticket into a volume
+# Install osticket 
 COPY install_osticket.sh /tmp/install_osticket.sh
 RUN chmod +x /tmp/install_osticket.sh
 RUN /tmp/install_osticket.sh
 
-VOLUME /usr/local/apache2/htdocs/osticket
+#VOLUME /usr/local/apache2/htdocs/osticket
 RUN chown -R osticket:osticket /usr/local/apache2/htdocs/osticket
 
 COPY setup_osticket.sh /tmp/setup_osticket.sh
