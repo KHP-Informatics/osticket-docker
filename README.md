@@ -53,35 +53,11 @@ Put your SSL cert in a named volume. For dev, you can just:
 Docker 1.9 recommends using named volumes, but until 1.10 (https://github.com/docker/docker/issues/18670) these don't copy over the data from the container image as anonymous volumes did. To work around this for now, create a named data volume by manually copying over the contents:
 
 ```
-docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-docker /usr/bin/rsync -avz /var/www/dokuwiki/ /data/
+docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-docker /usr/bin/rsync -avz /usr/local/apache2/htdocs/osticket /data/
 docker rm deleteme
 ```
 
-Docker 1.9 recommends using named volumes, but until 1.10 (https://github.com/docker/docker/issues/18670) these don't copy over the data from the container image as anonymous volumes did. To work around this for now, create a named data volume by manually copying over the contents:
-
-```
-docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-data /usr/bin/rsync -avz /var/www/dokuwiki/ /data/
-docker rm deleteme
-```
-
-
-
-The OSticket container stores it's osticket data in a volume, so if you create a data container, 
-then you can just --volumes-from. Otherwise your config data won't persist through an osticket 
-container restart. You might as well pass your SSL certs in here too  
-
-```
-docker run --name osticket-data \
-           --net osticket_nw \
-            -v /tmp/server.key:/usr/local/apache2/conf/server.key \
-            -v /tmp/server.pem:/usr/local/apache2/conf/server.pem \
-           cassj/osticket-docker:latest \
-           /bin/echo 'Data Container Ready'
-```
-
-You can now run your osticket container, bind mount your SSL certs and link it to your database.
-
-You'll need to define some environment variables to configure your OSTicket: 
+The container can be configured by passing some environment variables when run:
 
 OSTICKET_URL   - will try to autodetect if undefined. 
 OSTICKET_NAME  - the name of your OSTicket site, e.g. "Bob's Helpdesk"
@@ -105,7 +81,8 @@ OSTICKET_DB_PASS
   docker run --name osticket \
              --hostname osticket \
              --net osticket_nw \
-             --volumes-from osticket-data \
+              -v osticket-keys:/usr/local/apache2/conf/ssl-certs \
+              -v osticket-data:/usr/local/apache2/htdocs/osticket \
               -e OSTICKET_URL=192.168.99.100 \
               -e OSTICKET_NAME=MyOSTicketService \
               -e OSTICKET_EMAIL=support@example.com \
@@ -125,7 +102,7 @@ OSTICKET_DB_PASS
 
 
 The setup script will set up the core plugins (https://github.com/osTicket/core-plugins). 
-You might need to give it a minute after startup to get the plugins initialised. THey can't
+You might need to give it a minute after startup to get the plugins initialised. They can't
 be installed until after the system is setup though.
 
 Users can submit tickets at https://$OSTICKET_URL/
