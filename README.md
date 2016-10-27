@@ -27,8 +27,6 @@ Setup a mysql database for OSticket to use (and, if you like, an isolated networ
               -d mysql:5.7
 ```
 
-Changing the root and user passwords, obvs.
-
 Docs for the mysql container are here - https://hub.docker.com/_/mysql/
 
 If you need to access the database, you can use something like:
@@ -43,7 +41,7 @@ If you need to access the database, you can use something like:
 Put your SSL cert in a named volume. For dev, you can just:
 
 ```
-  docker run --name=deleteme -it -v osticket-keys:/tmp cassj/osticket /bin/bash
+  docker run --name=deleteme -it -v osticket-keys:/tmp cassj/osticket-docker /bin/bash
   cd /tmp
   openssl req -new -x509 -nodes -out server.pem -keyout server.key -days 3650 -subj '/CN=localhost'
   exit
@@ -53,11 +51,17 @@ Put your SSL cert in a named volume. For dev, you can just:
 Docker 1.9 recommends using named volumes, but until 1.10 (https://github.com/docker/docker/issues/18670) these don't copy over the data from the container image as anonymous volumes did. To work around this for now, create a named data volume by manually copying over the contents:
 
 ```
-docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-docker /usr/bin/rsync -avz /usr/local/apache2/htdocs/osticket /data/
+docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-docker:1.9.14 /usr/bin/rsync -avz /usr/local/apache2/htdocs/osticket/ /data/
 docker rm deleteme
 ```
 
-The container can be configured by passing some environment variables when run:
+Start your webserver:
+
+If this is your first run of osticket, specify the settings you want as environment variables. If your oticket-data volume already contains a configured osticket then you can omit the env vars.
+
+```
+docker run --name=osticket --net=osticket_nw -v osticket-keys:/usr/local/apache2/conf/ssl-certs -v osticket-data:/usr/local/apache2/htdocs/osticket  -e OSTICKET_URL=192.168.99.100 -e OSTICKET_NAME=MyOSTicketService -e OSTICKET_EMAIL=foo@example.com  -e OSTICKET_ADMIN_EMAIL=bar@example.com -e OSTICKET_ADMIN_FNAME=Kate -e OSTICKET_ADMIN_LNAME=Administrator -e OSTICKET_ADMIN_USERNAME=administrator -e OSTICKET_ADMIN_PASSWORD=password -e OSTICKET_DB_PREFIX=ost_ -e OSTICKET_DB_HOST=osticket-mysql -e OSTICKET_DB_NAME=osticket -e OSTICKET_DB_USER=osticket -e OSTICKET_DB_PASS=password  -p 80:80 -p 443:443 -d cassj/osticket-docker:1.9.14
+```
 
 OSTICKET_URL   - will try to autodetect if undefined. 
 OSTICKET_NAME  - the name of your OSTicket site, e.g. "Bob's Helpdesk"
@@ -65,7 +69,7 @@ OSTICKET_EMAIL - the system email (e.g. support@example.com)
 
 OSTICKET_ADMIN_FNAME - Administrator forename
 OSTICKET_ADMIN_LNAME - Administrator surname
-OSTICKET_ADMIN_EMAIL 
+OSTICKET_ADMIN_EMAIL - Must differ from the system email 
 OSTICKET_ADMIN_USERNAME 
 OSTICKET_ADMIN_PASSWORD
 
@@ -76,34 +80,14 @@ OSTICKET_DB_USER
 OSTICKET_DB_PASS
 
 
-
-```
-  docker run --name osticket \
-             --hostname osticket \
-             --net osticket_nw \
-              -v osticket-keys:/usr/local/apache2/conf/ssl-certs \
-              -v osticket-data:/usr/local/apache2/htdocs/osticket \
-              -e OSTICKET_URL=192.168.99.100 \
-              -e OSTICKET_NAME=MyOSTicketService \
-              -e OSTICKET_EMAIL=support@example.com \
-              -e OSTICKET_ADMIN_EMAIL=admin@example.com\
-              -e OSTICKET_ADMIN_FNAME=Kate\
-              -e OSTICKET_ADMIN_LNAME=Administrator \
-              -e OSTICKET_ADMIN_USERNAME=administrator \
-              -e OSTICKET_ADMIN_PASSWORD=password \
-              -e OSTICKET_DB_PREFIX=ost_ \
-              -e OSTICKET_DB_HOST=osticket-mysql \
-              -e OSTICKET_DB_NAME=osticket \
-              -e OSTICKET_DB_USER=osticket \
-              -e OSTICKET_DB_PASS=password \
-              -p 80:80 -p 443:443 \
-              -d cassj/osticket-docker:latest 
-```
-
-
 The setup script will set up the core plugins (https://github.com/osTicket/core-plugins). 
-You might need to give it a minute after startup to get the plugins initialised. They can't
-be installed until after the system is setup though.
+This takes a while, so give it a minute. You can watch it install with 
+
+```
+docker logs -f osticket
+```
+
+although there is an issue with composer which means you'll see a load of 'Invalid version string' warnings. You can safely ignore them. 
 
 Users can submit tickets at https://$OSTICKET_URL/
 
@@ -127,4 +111,6 @@ Get the version you want from Dockerhub
 
   docker pull cassj/osticket:<tag>
 
-OSticket update docs are available at http://osticket.com/wiki/Upgrade_and_migration, and basically involve overwriting your existing OSticket files with new ones. 
+OSticket update docs are available at http://osticket.com/wiki/Upgrade_and_migration, and basically involve overwriting your existing OSticket files with new ones.
+
+
