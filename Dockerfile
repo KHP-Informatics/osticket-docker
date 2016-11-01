@@ -29,10 +29,16 @@ RUN chown -R osticket:osticket /usr/local/apache2/htdocs
 COPY setup_osticket.sh /tmp/setup_osticket.sh
 RUN chmod +x /tmp/setup_osticket.sh 
 
-CMD  ["/bin/bash", "-mc", "/tmp/setup_osticket.sh"]  
-
 # Define default env vars for httpd - you can override these when you create the container
 ENV SERVERNAME localhost
 ENV ADMINEMAIL root@localhost
 
+# and for php.ini
+ENV PHP_DATE_TIMEZONE Europe/London
+ENV PHP_POST_MAX_SIZE 8M
+ENV PHP_MEMORY_LIMIT 128M
+ENV PHP_DISPLAY_ERRORS Off
+ENV PHP_STARTUP_ERRORS Off
+
+CMD  ["/bin/bash", "-mc", "/tmp/setup_osticket.sh"]
 
