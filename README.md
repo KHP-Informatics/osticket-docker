@@ -51,7 +51,7 @@ Put your SSL cert in a named volume. For dev, you can just:
 Docker 1.9 recommends using named volumes, but until 1.10 (https://github.com/docker/docker/issues/18670) these don't copy over the data from the container image as anonymous volumes did. To work around this for now, create a named data volume by manually copying over the contents:
 
 ```
-docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-docker /usr/bin/rsync -avz /usr/local/apache2/htdocs/osticket/ /data/
+docker run --name=deleteme -it -v osticket-data:/data cassj/osticket-docker:1.10 /usr/bin/rsync -avz /usr/local/apache2/htdocs/osticket/ /data/
 docker rm deleteme
 ```
 
@@ -60,7 +60,7 @@ Start your webserver:
 If this is your first run of osticket, specify the settings you want as environment variables. If your oticket-data volume already contains a configured osticket then you can omit the env vars.
 
 ```
-docker run --name=osticket --net=osticket_nw -v osticket-keys:/usr/local/apache2/conf/ssl-certs -v osticket-data:/usr/local/apache2/htdocs/osticket  -e OSTICKET_URL=192.168.99.100 -e OSTICKET_NAME=MyOSTicketService -e OSTICKET_EMAIL=foo@example.com  -e OSTICKET_ADMIN_EMAIL=bar@example.com -e OSTICKET_ADMIN_FNAME=Kate -e OSTICKET_ADMIN_LNAME=Administrator -e OSTICKET_ADMIN_USERNAME=administrator -e OSTICKET_ADMIN_PASSWORD=password -e OSTICKET_DB_PREFIX=ost_ -e OSTICKET_DB_HOST=osticket-mysql -e OSTICKET_DB_NAME=osticket -e OSTICKET_DB_USER=osticket -e OSTICKET_DB_PASS=password  --log-opt max-size=2m --log-opt max-file=3 -p 80:80 -p 443:443 -d cassj/osticket-docker
+docker run --name=osticket --net=osticket_nw -v osticket-keys:/usr/local/apache2/conf/ssl-certs -v osticket-data:/usr/local/apache2/htdocs/osticket  -e OSTICKET_URL=192.168.99.100 -e OSTICKET_NAME=MyOSTicketService -e OSTICKET_EMAIL=foo@example.com  -e OSTICKET_ADMIN_EMAIL=bar@example.com -e OSTICKET_ADMIN_FNAME=Kate -e OSTICKET_ADMIN_LNAME=Administrator -e OSTICKET_ADMIN_USERNAME=administrator -e OSTICKET_ADMIN_PASSWORD=password -e OSTICKET_DB_PREFIX=ost_ -e OSTICKET_DB_HOST=osticket-mysql -e OSTICKET_DB_NAME=osticket -e OSTICKET_DB_USER=osticket -e OSTICKET_DB_PASS=password  --log-opt max-size=2m --log-opt max-file=3 -p 80:80 -p 443:443 -d cassj/osticket-docker:1.10
 ```
 
 OSTICKET_URL   - will try to autodetect if undefined. 
